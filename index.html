@@ -97,9 +97,6 @@
             display: block;
         }
 
-        .video-wrapper.mirrored video {
-            transform: scaleX(-1);
-        }
 
         /* Upload Placeholder */
         .upload-zone {
@@ -188,39 +185,6 @@
             width: 28px;
             height: 28px;
             fill: white;
-        }
-
-        /* Fullscreen button overlay */
-        .fullscreen-btn-overlay {
-            position: absolute;
-            bottom: 12px;
-            right: 12px;
-            width: 40px;
-            height: 40px;
-            background: rgba(0,0,0,0.5);
-            border: none;
-            border-radius: 8px;
-            color: white;
-            cursor: pointer;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            backdrop-filter: blur(6px);
-            transition: background 0.2s;
-            z-index: 5;
-        }
-
-        .fullscreen-btn-overlay:hover {
-            background: rgba(0,0,0,0.7);
-        }
-
-        .video-wrapper:hover .fullscreen-btn-overlay {
-            display: flex;
-        }
-
-        .fullscreen-btn-overlay svg {
-            width: 20px;
-            height: 20px;
         }
 
         /* Progress Bar */
@@ -524,18 +488,64 @@
             text-align: center;
         }
 
-        /* Fullscreen styles */
-        .video-wrapper:fullscreen,
-        .video-wrapper:-webkit-full-screen {
-            background: #000;
-            border-radius: 0;
-            border: none;
-        }
+        /* The stage is separate from the controls in normal view. In immersive
+           modes both live in the fullscreen wrapper and controls overlay the image. */
+        .video-wrapper { aspect-ratio: auto; cursor: default; }
+        .video-stage { position: relative; aspect-ratio: 16 / 9; overflow: hidden; background: #000; }
+        .video-viewport { position: absolute; overflow: hidden; }
+        .video-wrapper .video-viewport video { position: absolute; max-width: none; object-fit: fill; transform: none; }
+        .video-wrapper.mirrored:not(.cropping) .video-viewport { transform: scaleX(-1); }
+        .upload-zone { z-index: 6; }
+        .play-overlay { z-index: 2; }
+        .player-controls { position: relative; z-index: 4; padding: 0 1rem 1rem; background: var(--bg); }
+        .player-controls .controls { margin-top: .75rem; }
+        .speed-group { flex-wrap: wrap; max-width: 100%; }
+        .replay-option { display: flex; align-items: center; gap: .45rem; font-size: .8rem; cursor: pointer; }
+        .replay-option input { accent-color: var(--accent); }
+        .progress-bar-container { touch-action: none; height: 12px; border: 3px solid transparent; background-clip: padding-box; }
+        .progress-bar-container:focus-visible { outline: 2px solid var(--accent); }
+        .video-wrapper.immersive { width: 100%; height: 100%; border: 0; border-radius: 0; background: #000; }
+        .video-wrapper.theater { position: fixed; inset: 0; width: 100vw; height: 100dvh; z-index: 100; }
+        body.theater-open { overflow: hidden; }
+        .immersive .video-stage { position: absolute; inset: 0; aspect-ratio: auto; }
+        .immersive .player-controls { position: absolute; bottom: 0; left: 0; right: 0; padding: 2.5rem 1rem max(1rem, env(safe-area-inset-bottom)); background: linear-gradient(transparent, rgba(0,0,0,.9) 40%); transition: opacity .22s ease, visibility .22s; max-height: 70%; overflow-y: auto; }
+        .immersive.controls-hidden .player-controls { opacity: 0; visibility: hidden; pointer-events: none; }
+        .immersive.controls-hidden { cursor: none; }
+        .crop-selection { position: absolute; border: 2px solid var(--accent); box-shadow: 0 0 0 9999px #0009; cursor: move; touch-action: none; }
+        .crop-grid { position: absolute; inset: 33.333%; border: 1px solid #ffffff55; pointer-events: none; }
+        .crop-handle { position: absolute; width: 20px; height: 20px; background: var(--accent); border: 2px solid white; border-radius: 4px; }
+        [data-edge="nw"] { left: -2px; top: -2px; cursor: nwse-resize; }
+        [data-edge="n"] { left: calc(50% - 10px); top: -2px; cursor: ns-resize; }
+        [data-edge="ne"] { right: -2px; top: -2px; cursor: nesw-resize; }
+        [data-edge="e"] { right: -2px; top: calc(50% - 10px); cursor: ew-resize; }
+        [data-edge="se"] { right: -2px; bottom: -2px; cursor: nwse-resize; }
+        [data-edge="s"] { left: calc(50% - 10px); bottom: -2px; cursor: ns-resize; }
+        [data-edge="sw"] { left: -2px; bottom: -2px; cursor: nesw-resize; }
+        [data-edge="w"] { left: -2px; top: calc(50% - 10px); cursor: ew-resize; }
+        .crop-toolbar { position: relative; z-index: 5; padding: .75rem 1rem; background: var(--surface); font-size: .78rem; }
+        .crop-toolbar span { color: var(--text-dim); display: block; margin-bottom: .5rem; }
+        .immersive .crop-toolbar { position: absolute; bottom: 0; left: 0; right: 0; }
+        .cropping .player-controls, .cropping .play-overlay { display: none; }
+        .player-status { position: absolute; top: 1rem; left: 1rem; right: 1rem; z-index: 7; text-align: center; pointer-events: none; font-size: .85rem; }
+        [hidden] { display: none !important; }
+        @media (prefers-reduced-motion: reduce) { .immersive .player-controls { transition: none; } }
 
-        .video-wrapper:fullscreen video,
-        .video-wrapper:-webkit-full-screen video {
-            height: 100vh;
-        }
+        .trim-editor { border: 1px solid var(--border); border-radius: 12px; background: var(--surface); padding: .85rem; margin-top: .75rem; }
+        .trim-heading, .trim-fields, .trim-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem; }
+        .trim-heading { justify-content: space-between; font-size: .85rem; }
+        .trim-heading span, .trim-editor p, .trim-actions span { color: var(--text-dim); font-size: .75rem; }
+        .trim-editor p { margin-top: .5rem; line-height: 1.5; }
+        .trim-track { position: relative; height: 36px; margin: .65rem 12px; touch-action: none; }
+        .trim-track::before, .trim-kept { content: ''; position: absolute; top: 14px; height: 8px; border-radius: 4px; background: var(--surface-2); left: 0; right: 0; }
+        .trim-kept { background: var(--accent); right: auto; }
+        .trim-track input { position: absolute; inset: 0 -12px; width: calc(100% + 24px); height: 36px; margin: 0; appearance: none; -webkit-appearance: none; background: transparent; pointer-events: none; }
+        .trim-track input::-webkit-slider-thumb { appearance: none; -webkit-appearance: none; width: 24px; height: 32px; border: 2px solid white; border-radius: 6px; background: var(--accent); cursor: ew-resize; pointer-events: auto; }
+        .trim-track input::-moz-range-thumb { width: 20px; height: 28px; border: 2px solid white; border-radius: 6px; background: var(--accent); cursor: ew-resize; pointer-events: auto; }
+        .trim-track input:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+        .trim-fields { margin-bottom: .6rem; font-size: .78rem; }
+        .trim-fields label { display: flex; align-items: center; gap: .4rem; }
+        .trim-fields input { width: 90px; padding: .4rem; background: var(--surface-2); color: var(--text); border: 1px solid var(--border); border-radius: 6px; font: inherit; }
+        .trimming #cropBtn, .trimming .loop-group, .trimming .play-overlay { display: none; }
 
         /* Responsive */
         @media (max-width: 768px) {
@@ -566,7 +576,18 @@
 <div class="main">
     <!-- Video Player -->
     <div class="video-wrapper" id="videoWrapper">
-        <video id="video" playsinline></video>
+        <div class="video-stage" id="videoStage">
+            <div class="video-viewport" id="videoViewport">
+                <video id="video" playsinline></video>
+                <div class="crop-selection" id="cropSelection" hidden aria-label="Crop selection">
+                    <span class="crop-grid"></span>
+                    <span class="crop-handle" data-edge="nw"></span><span class="crop-handle" data-edge="n"></span>
+                    <span class="crop-handle" data-edge="ne"></span><span class="crop-handle" data-edge="e"></span>
+                    <span class="crop-handle" data-edge="se"></span><span class="crop-handle" data-edge="s"></span>
+                    <span class="crop-handle" data-edge="sw"></span><span class="crop-handle" data-edge="w"></span>
+                </div>
+            </div>
+        </div>
 
         <div class="upload-zone" id="uploadZone">
             <div class="upload-icon">↑</div>
@@ -580,18 +601,11 @@
             </div>
         </div>
 
-        <button class="fullscreen-btn-overlay" id="fullscreenBtn" title="Fullscreen (F)">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M8 3H5a2 2 0 00-2 2v3m18 0V5a2 2 0 00-2-2h-3m0 18h3a2 2 0 002-2v-3M3 16v3a2 2 0 002 2h3"/>
-            </svg>
-        </button>
-
         <input type="file" id="fileInput" accept="video/*">
-    </div>
-
+        <div class="player-controls" id="playerControls">
     <!-- Progress -->
     <div class="progress-section" id="progressSection" style="display:none;">
-        <div class="progress-bar-container" id="progressBar">
+        <div class="progress-bar-container" id="progressBar" role="slider" tabindex="0" aria-label="Video position" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0">
             <div class="loop-region" id="loopRegion" style="display:none;"></div>
             <div class="loop-marker a" id="markerA" style="display:none;"></div>
             <div class="loop-marker b" id="markerB" style="display:none;"></div>
@@ -603,17 +617,38 @@
         </div>
     </div>
 
+    <section class="trim-editor" id="trimEditor" hidden aria-label="Trim video length">
+        <div class="trim-heading"><strong>Trim · keep a section</strong><span id="trimSummary"></span></div>
+        <p>Drag the handles or enter seconds. Use the timeline above to find a frame, then set it as Start or End.</p>
+        <div class="trim-track" id="trimTrack">
+            <div class="trim-kept" id="trimKept"></div>
+            <input type="range" id="trimStartRange" min="0" max="1" step="0.01" value="0" aria-label="Trim start">
+            <input type="range" id="trimEndRange" min="0" max="1" step="0.01" value="1" aria-label="Trim end">
+        </div>
+        <div class="trim-fields">
+            <label>Start (s) <input type="number" id="trimStartInput" min="0" step="0.01"></label>
+            <button class="loop-btn" id="trimSetStart">Set start here</button>
+            <label>End (s) <input type="number" id="trimEndInput" min="0" step="0.01"></label>
+            <button class="loop-btn" id="trimSetEnd">Set end here</button>
+        </div>
+        <div class="trim-actions">
+            <button class="loop-btn active-loop" id="applyTrimBtn">Apply</button>
+            <button class="loop-btn" id="cancelTrimBtn">Cancel</button>
+            <button class="loop-btn" id="resetTrimBtn">Reset Trim</button>
+            <span>Original file stays unchanged.</span>
+        </div>
+    </section>
     <!-- Controls -->
     <div class="controls" id="controlsSection" style="display:none;">
         <!-- Play/Pause & Skip -->
         <div class="control-group">
-            <button class="ctrl-btn" id="skipBackBtn" title="Back 5s (←)">
+            <button class="ctrl-btn" id="skipBackBtn" title="Back 5s">
                 <svg viewBox="0 0 24 24"><path d="M11 19l-7-7 7-7"/><path d="M4 12h16"/></svg>
             </button>
             <button class="ctrl-btn" id="playBtn" title="Play/Pause (Space)">
                 <svg viewBox="0 0 24 24" id="playIcon"><polygon points="5,3 19,12 5,21" fill="currentColor" stroke="none"/></svg>
             </button>
-            <button class="ctrl-btn" id="skipFwdBtn" title="Forward 5s (→)">
+            <button class="ctrl-btn" id="skipFwdBtn" title="Forward 5s">
                 <svg viewBox="0 0 24 24"><path d="M13 5l7 7-7 7"/><path d="M20 12H4"/></svg>
             </button>
         </div>
@@ -649,8 +684,25 @@
             <button class="loop-btn clear-loop" id="clearLoopBtn" title="Clear loop (C)" style="display:none;">✕</button>
         </div>
 
+        <div class="control-group view-controls">
+            <button class="loop-btn" id="cropBtn" title="裁剪画面 · Crop picture">Crop</button>
+            <button class="loop-btn" id="trimBtn" title="修剪时长 · Trim start and end" aria-expanded="false">Trim</button>
+            <button class="loop-btn" id="theaterBtn" title="Theater mode (T)" aria-pressed="false">Theater</button>
+            <button class="loop-btn" id="fullscreenBtn" title="Fullscreen (F)" aria-label="Enter fullscreen">Fullscreen</button>
+        </div>
+        <label class="replay-option"><input type="checkbox" id="autoReplay" checked> Auto Replay</label>
         <!-- Upload new -->
         <button class="upload-new-btn" id="uploadNewBtn">Change Video</button>
+    </div>
+
+        </div>
+        <div class="crop-toolbar" id="cropToolbar" hidden>
+            <span>Drag the area, edges, or corners. Freeform · original orientation</span>
+            <div><button class="loop-btn active-loop" id="applyCropBtn">Apply</button>
+            <button class="loop-btn" id="cancelCropBtn">Cancel</button>
+            <button class="loop-btn" id="resetCropBtn">Reset Crop</button></div>
+        </div>
+        <div class="player-status" id="playerStatus" role="status" aria-live="polite"></div>
     </div>
 
     <!-- Keyboard Shortcuts -->
@@ -659,8 +711,9 @@
         <div class="shortcuts-grid">
             <div class="shortcut"><kbd>Space</kbd> Play / Pause</div>
             <div class="shortcut"><kbd>M</kbd> Mirror</div>
-            <div class="shortcut"><kbd>←</kbd><kbd>→</kbd> Skip 5s</div>
+            <div class="shortcut"><kbd>←</kbd><kbd>→</kbd> Seek 1s</div>
             <div class="shortcut"><kbd>F</kbd> Fullscreen</div>
+            <div class="shortcut"><kbd>T</kbd> Theater · <kbd>Esc</kbd> Exit / cancel edit</div>
             <div class="shortcut"><kbd>[</kbd> Set A point</div>
             <div class="shortcut"><kbd>]</kbd> Set B point</div>
             <div class="shortcut"><kbd>L</kbd> Toggle loop</div>
@@ -723,22 +776,34 @@
     });
 
     function loadVideo(file) {
-        const url = URL.createObjectURL(file);
-        video.src = url;
+        video.pause();
+        if (objectURL) URL.revokeObjectURL(objectURL);
+        objectURL = URL.createObjectURL(file);
+        finishCrop(false);
+        finishTrim(false);
+        trimStart = 0; trimEnd = null;
+        updateTrimButton();
+        crop = fullCrop();
+        document.getElementById('clearLoopBtn').click();
+        video.src = objectURL;
         video.load();
         uploadZone.classList.add('hidden');
         progressSection.style.display = '';
         controlsSection.style.display = '';
         shortcutsSection.style.display = '';
+        fileInput.value = '';
+        revealControls();
     }
 
     document.getElementById('uploadNewBtn').addEventListener('click', () => fileInput.click());
 
     // -- Play / Pause --
     function togglePlay() {
-        if (!video.src) return;
+        if (!video.src || editingCrop || editingTrim) return;
         if (video.paused) {
-            video.play();
+            const range = playbackRange();
+            if (video.currentTime >= range.end - .02 || video.currentTime < range.start) seekTo(range.start);
+            playSafely();
         } else {
             video.pause();
         }
@@ -760,14 +825,17 @@
 
     // Click video to play/pause
     videoWrapper.addEventListener('click', (e) => {
-        if (e.target === uploadZone || uploadZone.contains(e.target)) return;
-        if (e.target === fullscreenBtn || fullscreenBtn.contains(e.target)) return;
+        if (!e.target.closest('.video-stage') || editingCrop) return;
+        if (e.pointerType === 'touch' && videoWrapper.classList.contains('controls-hidden')) {
+            revealControls();
+            return;
+        }
         togglePlay();
     });
 
     // Double click for fullscreen
     videoWrapper.addEventListener('dblclick', (e) => {
-        if (e.target === uploadZone || uploadZone.contains(e.target)) return;
+        if (!e.target.closest('.video-stage') || editingCrop) return;
         toggleFullscreen();
     });
 
@@ -778,32 +846,70 @@
 
     // -- Progress --
     video.addEventListener('timeupdate', () => {
-        if (!video.duration) return;
-        const pct = (video.currentTime / video.duration) * 100;
-        progressFill.style.width = pct + '%';
-        currentTimeEl.textContent = formatTime(video.currentTime);
-
-        // AB Loop
-        if (loopActive && loopA !== null && loopB !== null) {
-            if (video.currentTime >= loopB) {
-                video.currentTime = loopA;
-            }
-        }
+        if (!Number.isFinite(video.duration) || !video.duration) return;
+        enforcePlaybackRange();
+        renderProgress();
     });
+
+    function renderProgress() {
+        const range = timelineRange();
+        if (!(range.end > range.start)) return;
+        const pct = clamp((video.currentTime - range.start) / (range.end - range.start), 0, 1) * 100;
+        progressFill.style.width = pct + '%';
+        currentTimeEl.textContent = formatTime(Math.max(0, video.currentTime - range.start));
+        totalTimeEl.textContent = formatTime(range.end - range.start);
+        progressBar.setAttribute('aria-valuemin', range.start);
+        progressBar.setAttribute('aria-valuemax', range.end);
+        progressBar.setAttribute('aria-valuenow', video.currentTime);
+        progressBar.setAttribute('aria-valuetext', formatTime(video.currentTime));
+
+    }
 
     video.addEventListener('loadedmetadata', () => {
         totalTimeEl.textContent = formatTime(video.duration);
+        progressBar.setAttribute('aria-valuemax', Number.isFinite(video.duration) ? video.duration : 0);
+        setSpeed(speedInput.value);
+        layoutVideo();
+        updateLoopUI();
+        renderProgress();
     });
 
-    progressBar.addEventListener('click', (e) => {
-        if (!video.duration) return;
+    function seekTo(time) {
+        if (Number.isFinite(video.duration) && video.duration > 0) {
+            const range = timelineRange();
+            video.currentTime = clamp(time, range.start, range.end);
+        }
+    }
+
+    let scrubbing = false;
+    function scrub(e) {
         const rect = progressBar.getBoundingClientRect();
-        const pct = (e.clientX - rect.left) / rect.width;
-        video.currentTime = pct * video.duration;
+        const range = timelineRange();
+        seekTo(range.start + (e.clientX - rect.left) / rect.width * (range.end - range.start));
+    }
+    progressBar.addEventListener('pointerdown', e => {
+        if (e.button !== 0 || !video.duration) return;
+        e.preventDefault();
+        scrubbing = true;
+        progressBar.setPointerCapture(e.pointerId);
+        revealControls();
+        scrub(e);
+    });
+    progressBar.addEventListener('pointermove', e => { if (scrubbing) scrub(e); });
+    function endScrub() { scrubbing = false; revealControls(); }
+    progressBar.addEventListener('pointerup', endScrub);
+    progressBar.addEventListener('pointercancel', endScrub);
+    progressBar.addEventListener('lostpointercapture', endScrub);
+    progressBar.addEventListener('keydown', e => {
+        if (e.code === 'Home' || e.code === 'End') {
+            e.preventDefault();
+            const range = timelineRange();
+            seekTo(e.code === 'Home' ? range.start : range.end);
+        }
     });
 
     function formatTime(s) {
-        if (isNaN(s)) return '0:00';
+        if (!Number.isFinite(s)) return '0:00';
         const m = Math.floor(s / 60);
         const sec = Math.floor(s % 60);
         return m + ':' + String(sec).padStart(2, '0');
@@ -844,26 +950,86 @@
         if (e.key === 'Enter') { e.target.blur(); setSpeed(parseFloat(speedInput.value)); }
     });
 
-    // -- Fullscreen --
-    function toggleFullscreen() {
-        if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-            if (videoWrapper.requestFullscreen) videoWrapper.requestFullscreen();
-            else if (videoWrapper.webkitRequestFullscreen) videoWrapper.webkitRequestFullscreen();
-        } else {
-            if (document.exitFullscreen) document.exitFullscreen();
-            else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
-        }
+    // -- Viewing modes and inactivity --
+    const theaterBtn = document.getElementById('theaterBtn');
+    const playerControls = document.getElementById('playerControls');
+    let hideTimer, controlPointer = null;
+    let pointerOverControls = false;
+    const fullscreenElement = () => document.fullscreenElement || document.webkitFullscreenElement;
+    function syncView() {
+        const theater = videoWrapper.classList.contains('theater');
+        const full = fullscreenElement() === videoWrapper;
+        videoWrapper.classList.toggle('immersive', theater || full);
+        document.body.classList.toggle('theater-open', theater);
+        theaterBtn.textContent = theater ? 'Exit Theater' : 'Theater';
+        theaterBtn.setAttribute('aria-pressed', theater);
+        fullscreenBtn.textContent = full ? 'Exit Fullscreen' : 'Fullscreen';
+        fullscreenBtn.setAttribute('aria-label', full ? 'Exit fullscreen' : 'Enter fullscreen');
+        revealControls();
+        layoutVideo();
     }
-
-    fullscreenBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        toggleFullscreen();
-    });
+    function toggleTheater() {
+        videoWrapper.classList.toggle('theater');
+        syncView();
+    }
+    async function toggleFullscreen() {
+        try {
+            if (!fullscreenElement()) {
+                if (videoWrapper.requestFullscreen) await videoWrapper.requestFullscreen();
+                else if (videoWrapper.webkitRequestFullscreen) videoWrapper.webkitRequestFullscreen();
+                else { showStatus('Fullscreen is unavailable in this browser. Use Theater mode.'); return; }
+            } else {
+                if (document.exitFullscreen) await document.exitFullscreen();
+                else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+            }
+        } catch (error) { showStatus('Fullscreen could not open. Try Theater mode.'); }
+    }
+    fullscreenBtn.addEventListener('click', toggleFullscreen);
+    theaterBtn.addEventListener('click', toggleTheater);
+    document.addEventListener('fullscreenchange', syncView);
+    document.addEventListener('webkitfullscreenchange', syncView);
+    function revealControls() {
+        clearTimeout(hideTimer);
+        videoWrapper.classList.remove('controls-hidden');
+        if (!videoWrapper.classList.contains('immersive')) return;
+        hideTimer = setTimeout(() => {
+            if (editingCrop || editingTrim || scrubbing || controlPointer !== null || pointerOverControls ||
+                playerControls.contains(document.activeElement)) return;
+            videoWrapper.classList.add('controls-hidden');
+        }, 2500);
+    }
+    videoWrapper.addEventListener('pointermove', revealControls);
+    // Do not reveal until click for touch, so the first tap only reveals hidden controls.
+    videoWrapper.addEventListener('pointerdown', e => { if (e.pointerType !== 'touch') revealControls(); });
+    videoWrapper.addEventListener('click', revealControls);
+    playerControls.addEventListener('pointerenter', e => { if (e.pointerType !== 'touch') pointerOverControls = true; revealControls(); });
+    playerControls.addEventListener('pointerleave', () => { pointerOverControls = false; revealControls(); });
+    playerControls.addEventListener('pointerdown', e => { controlPointer = e.pointerId; revealControls(); });
+    function releaseControl(e) {
+        if (controlPointer !== e.pointerId) return;
+        controlPointer = null;
+        // Pointer clicks should not leave buttons focused forever; keyboard focus stays visible.
+        if (document.activeElement?.matches('button')) document.activeElement.blur();
+        revealControls();
+    }
+    window.addEventListener('pointerup', releaseControl);
+    window.addEventListener('pointercancel', releaseControl);
+    playerControls.addEventListener('focusin', revealControls);
+    playerControls.addEventListener('focusout', () => setTimeout(revealControls, 0));
+    playerControls.addEventListener('input', revealControls);
+    let statusTimer;
+    function showStatus(message) {
+        const status = document.getElementById('playerStatus');
+        status.textContent = message;
+        clearTimeout(statusTimer);
+        statusTimer = setTimeout(() => status.textContent = '', 4500);
+    }
 
     // -- AB Loop --
     setABtn.addEventListener('click', (e) => {
         e.stopPropagation();
         loopA = video.currentTime;
+        if (loopB !== null && loopA >= loopB) { loopB = null; loopActive = false; setBBtn.textContent = 'B'; }
         setABtn.textContent = 'A: ' + formatTime(loopA);
         updateLoopUI();
     });
@@ -874,6 +1040,8 @@
         if (loopA !== null && loopB <= loopA) {
             loopB = null;
             setBBtn.textContent = 'B';
+            loopActive = false;
+            updateLoopUI();
             return;
         }
         setBBtn.textContent = 'B: ' + formatTime(loopB);
@@ -898,7 +1066,9 @@
     });
 
     function updateLoopUI() {
-        const hasLoop = loopA !== null && loopB !== null;
+        const range = timelineRange();
+        const position = time => (time - range.start) / (range.end - range.start) * 100;
+        const hasLoop = loopA !== null && loopB !== null && loopB > loopA;
         toggleLoopBtn.style.display = hasLoop ? '' : 'none';
         clearLoopBtn.style.display = (loopA !== null || loopB !== null) ? '' : 'none';
         toggleLoopBtn.textContent = loopActive ? '⟳ On' : '⟳ Off';
@@ -906,30 +1076,43 @@
 
         if (loopA !== null && video.duration) {
             markerA.style.display = '';
-            markerA.style.left = (loopA / video.duration * 100) + '%';
+            markerA.style.left = position(loopA) + '%';
         } else {
             markerA.style.display = 'none';
         }
 
         if (loopB !== null && video.duration) {
             markerB.style.display = '';
-            markerB.style.left = (loopB / video.duration * 100) + '%';
+            markerB.style.left = position(loopB) + '%';
         } else {
             markerB.style.display = 'none';
         }
 
         if (hasLoop && video.duration) {
             loopRegion.style.display = '';
-            loopRegion.style.left = (loopA / video.duration * 100) + '%';
-            loopRegion.style.width = ((loopB - loopA) / video.duration * 100) + '%';
+            loopRegion.style.left = position(loopA) + '%';
+            loopRegion.style.width = (position(loopB) - position(loopA)) + '%';
         } else {
             loopRegion.style.display = 'none';
         }
     }
 
+    document.getElementById('skipBackBtn').addEventListener('click', () => seekTo(video.currentTime - 5));
+    document.getElementById('skipFwdBtn').addEventListener('click', () => seekTo(video.currentTime + 5));
+
     // -- Keyboard Shortcuts --
     document.addEventListener('keydown', (e) => {
-        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+        if (e.code === 'Escape') {
+            if (editingTrim) finishTrim(false);
+            else if (editingCrop) finishCrop(false);
+            else if (!fullscreenElement() && videoWrapper.classList.contains('theater')) toggleTheater();
+            return;
+        }
+        if (e.target.closest('input, textarea, select, [contenteditable]:not([contenteditable="false"])') || e.ctrlKey || e.metaKey || e.altKey) return;
+        if (editingCrop || !video.src) return;
+        if (e.code === 'Space' && e.target.closest('button')) return;
+        if (editingTrim && !['ArrowLeft', 'ArrowRight', 'KeyF', 'KeyT'].includes(e.code)) return;
+        revealControls();
 
         switch (e.code) {
             case 'Space':
@@ -938,11 +1121,14 @@
                 break;
             case 'ArrowLeft':
                 e.preventDefault();
-                video.currentTime = Math.max(0, video.currentTime - 5);
+                seekTo(video.currentTime - 1);
                 break;
             case 'ArrowRight':
                 e.preventDefault();
-                video.currentTime = Math.min(video.duration, video.currentTime + 5);
+                seekTo(video.currentTime + 1);
+                break;
+            case 'KeyT':
+                toggleTheater();
                 break;
             case 'KeyM':
                 mirrorBtn.click();
@@ -964,6 +1150,256 @@
                 break;
         }
     });
+    // -- Full-video replay: an active, valid A/B range always wins. --
+    function validLoop() {
+        const range = playbackRange();
+        return loopActive && loopA !== null && loopB !== null && loopB > loopA && loopA >= range.start && loopB <= range.end;
+    }
+    function playSafely() {
+        const promise = video.play();
+        if (promise) promise.catch(() => showStatus('Press Play to start playback.'));
+    }
+    video.addEventListener('ended', () => {
+        if (editingCrop || editingTrim || scrubbing) return;
+        if (validLoop()) { seekTo(loopA); playSafely(); }
+        else if (document.getElementById('autoReplay').checked) { seekTo(playbackRange().start); playSafely(); }
+    });
+
+    // -- Non-destructive crop, stored in normalized, original-video coordinates. --
+    const videoStage = document.getElementById('videoStage');
+    const videoViewport = document.getElementById('videoViewport');
+    const cropSelection = document.getElementById('cropSelection');
+    const cropToolbar = document.getElementById('cropToolbar');
+    const fullCrop = () => ({ x: 0, y: 0, w: 1, h: 1 });
+    const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+    let crop = fullCrop(), draftCrop = fullCrop(), editingCrop = false;
+    let cropDrag = null, objectURL = null;
+
+    function layoutVideo() {
+        const sourceW = video.videoWidth || 16, sourceH = video.videoHeight || 9;
+        const region = editingCrop ? fullCrop() : crop;
+        const pad = editingCrop ? 14 : 0;
+        const toolbarHeight = editingCrop && videoWrapper.classList.contains('immersive') ? cropToolbar.offsetHeight : 0;
+        const availableW = Math.max(1, videoStage.clientWidth - pad * 2);
+        const availableH = Math.max(1, videoStage.clientHeight - toolbarHeight - pad * 2);
+        const scale = Math.min(availableW / (sourceW * region.w), availableH / (sourceH * region.h));
+        const width = sourceW * region.w * scale, height = sourceH * region.h * scale;
+        Object.assign(videoViewport.style, {
+            width: width + 'px', height: height + 'px',
+            left: (videoStage.clientWidth - width) / 2 + 'px',
+            top: (videoStage.clientHeight - toolbarHeight - height) / 2 + 'px'
+        });
+        Object.assign(video.style, {
+            width: sourceW * scale + 'px', height: sourceH * scale + 'px',
+            left: -region.x * sourceW * scale + 'px', top: -region.y * sourceH * scale + 'px'
+        });
+        if (editingCrop) renderSelection();
+    }
+    function renderSelection() {
+        Object.assign(cropSelection.style, {
+            left: draftCrop.x * 100 + '%', top: draftCrop.y * 100 + '%',
+            width: draftCrop.w * 100 + '%', height: draftCrop.h * 100 + '%'
+        });
+    }
+    document.getElementById('cropBtn').addEventListener('click', () => {
+        if (!video.videoWidth || editingTrim) return;
+        video.pause();
+        editingCrop = true;
+        draftCrop = { ...crop };
+        cropSelection.hidden = false;
+        cropToolbar.hidden = false;
+        videoWrapper.classList.add('cropping');
+        revealControls();
+        layoutVideo();
+        document.getElementById('applyCropBtn').focus();
+    });
+    function finishCrop(apply) {
+        const wasEditing = editingCrop;
+        if (apply && wasEditing) crop = { ...draftCrop };
+        editingCrop = false;
+        cropDrag = null;
+        cropSelection.hidden = true;
+        cropToolbar.hidden = true;
+        videoWrapper.classList.remove('cropping');
+        layoutVideo();
+        revealControls();
+        if (wasEditing) document.getElementById('cropBtn').focus();
+    }
+    document.getElementById('applyCropBtn').addEventListener('click', () => finishCrop(true));
+    document.getElementById('cancelCropBtn').addEventListener('click', () => finishCrop(false));
+    document.getElementById('resetCropBtn').addEventListener('click', () => {
+        // Reset the draft; Cancel still restores the previously applied crop.
+        draftCrop = fullCrop();
+        renderSelection();
+    });
+    cropSelection.addEventListener('pointerdown', e => {
+        if (e.button !== 0) return;
+        e.preventDefault();
+        const rect = videoViewport.getBoundingClientRect();
+        cropDrag = { pointer: e.pointerId, edge: e.target.dataset.edge || 'move',
+            startX: e.clientX, startY: e.clientY, width: rect.width, height: rect.height, start: { ...draftCrop } };
+        cropSelection.setPointerCapture(e.pointerId);
+    });
+    cropSelection.addEventListener('pointermove', e => {
+        if (!cropDrag || cropDrag.pointer !== e.pointerId) return;
+        const { edge, start: r, width, height } = cropDrag;
+        const dx = (e.clientX - cropDrag.startX) / width;
+        const dy = (e.clientY - cropDrag.startY) / height;
+        if (edge === 'move') {
+            draftCrop = { ...r, x: clamp(r.x + dx, 0, 1 - r.w), y: clamp(r.y + dy, 0, 1 - r.h) };
+        } else {
+            let left = r.x, right = r.x + r.w, top = r.y, bottom = r.y + r.h;
+            const minW = Math.min(r.w, Math.max(.025, 32 / width));
+            const minH = Math.min(r.h, Math.max(.025, 32 / height));
+            if (edge.includes('w')) left = clamp(r.x + dx, 0, right - minW);
+            if (edge.includes('e')) right = clamp(r.x + r.w + dx, left + minW, 1);
+            if (edge.includes('n')) top = clamp(r.y + dy, 0, bottom - minH);
+            if (edge.includes('s')) bottom = clamp(r.y + r.h + dy, top + minH, 1);
+            draftCrop = { x: left, y: top, w: right - left, h: bottom - top };
+        }
+        renderSelection();
+    });
+    function endCropDrag(e) { if (cropDrag?.pointer === e.pointerId) cropDrag = null; }
+    cropSelection.addEventListener('pointerup', endCropDrag);
+    cropSelection.addEventListener('pointercancel', endCropDrag);
+    cropSelection.addEventListener('lostpointercapture', endCropDrag);
+    new ResizeObserver(layoutVideo).observe(videoStage);
+    new ResizeObserver(layoutVideo).observe(cropToolbar);
+    window.addEventListener('resize', layoutVideo);
+    window.addEventListener('pagehide', () => { if (objectURL) URL.revokeObjectURL(objectURL); });
+
+    // -- Non-destructive temporal trim. Source timestamps stay in original seconds. --
+    const trimBtn = document.getElementById('trimBtn');
+    const trimEditor = document.getElementById('trimEditor');
+    const trimStartRange = document.getElementById('trimStartRange');
+    const trimEndRange = document.getElementById('trimEndRange');
+    const trimStartInput = document.getElementById('trimStartInput');
+    const trimEndInput = document.getElementById('trimEndInput');
+    let trimStart = 0, trimEnd = null, editingTrim = false;
+    let draftTrimStart = 0, draftTrimEnd = 0, trimPreviewTime = 0;
+    function playbackRange() {
+        return { start: trimStart, end: trimEnd ?? (Number.isFinite(video.duration) ? video.duration : 0) };
+    }
+    function timelineRange() {
+        return editingTrim ? { start: 0, end: Number.isFinite(video.duration) ? video.duration : 0 } : playbackRange();
+    }
+    function updateTrimButton() {
+        const active = trimStart > 0 || trimEnd !== null;
+        trimBtn.classList.toggle('active-loop', active);
+        trimBtn.textContent = active ? 'Trim ✓' : 'Trim';
+        trimBtn.setAttribute('aria-expanded', editingTrim);
+    }
+    function trimTime(time) {
+        const hundredths = Math.round(time * 100);
+        return Math.floor(hundredths / 6000) + ':' + (Math.floor(hundredths / 100) % 60).toString().padStart(2, '0') + '.' + (hundredths % 100).toString().padStart(2, '0');
+    }
+    function renderTrim() {
+        trimStartRange.value = draftTrimStart;
+        trimEndRange.value = draftTrimEnd;
+        trimStartInput.value = draftTrimStart.toFixed(2);
+        trimEndInput.value = draftTrimEnd.toFixed(2);
+        trimStartInput.max = Math.max(0, draftTrimEnd - trimGap()).toFixed(2);
+        trimEndInput.min = (draftTrimStart + trimGap()).toFixed(2);
+        trimEndInput.max = video.duration;
+        document.getElementById('trimSummary').textContent = trimTime(draftTrimStart) + ' – ' + trimTime(draftTrimEnd) + ' · Keep ' + trimTime(draftTrimEnd - draftTrimStart);
+        const kept = document.getElementById('trimKept');
+        kept.style.left = draftTrimStart / video.duration * 100 + '%';
+        kept.style.width = (draftTrimEnd - draftTrimStart) / video.duration * 100 + '%';
+        trimStartRange.setAttribute('aria-valuetext', trimTime(draftTrimStart));
+        trimEndRange.setAttribute('aria-valuetext', trimTime(draftTrimEnd));
+    }
+    function trimGap() { return Math.min(.1, video.duration); }
+    function setTrimPoint(which, value) {
+        if (!editingTrim || !Number.isFinite(value)) { renderTrim(); return; }
+        if (which === 'start') {
+            draftTrimStart = clamp(value, 0, draftTrimEnd - trimGap());
+            seekTo(draftTrimStart);
+        } else {
+            draftTrimEnd = clamp(value, draftTrimStart + trimGap(), video.duration);
+            seekTo(draftTrimEnd);
+        }
+        renderTrim();
+    }
+    trimBtn.addEventListener('click', () => {
+        if (editingTrim) { finishTrim(false); return; }
+        if (editingCrop || !Number.isFinite(video.duration) || video.duration <= 0) return;
+        video.pause();
+        trimPreviewTime = video.currentTime;
+        const range = playbackRange();
+        draftTrimStart = range.start; draftTrimEnd = range.end;
+        editingTrim = true;
+        trimEditor.hidden = false;
+        videoWrapper.classList.add('trimming');
+        trimStartRange.max = video.duration;
+        trimEndRange.max = video.duration;
+        renderTrim();
+        renderProgress();
+        updateLoopUI();
+        updateTrimButton();
+        revealControls();
+        trimStartRange.focus();
+    });
+    function finishTrim(apply) {
+        if (!editingTrim) return;
+        if (apply) {
+            trimStart = draftTrimStart;
+            trimEnd = Math.abs(draftTrimEnd - video.duration) < .005 ? null : draftTrimEnd;
+            const range = playbackRange();
+            if ((loopA !== null && (loopA < range.start || loopA >= range.end)) ||
+                (loopB !== null && (loopB <= range.start || loopB > range.end))) {
+                clearLoopBtn.click();
+                showStatus('Trim applied. A/B points outside the kept section were cleared.');
+            }
+        }
+        editingTrim = false;
+        trimEditor.hidden = true;
+        videoWrapper.classList.remove('trimming');
+        const range = playbackRange();
+        const target = apply ? video.currentTime : trimPreviewTime;
+        seekTo(target < range.start || target >= range.end ? range.start : target);
+        updateTrimButton();
+        renderProgress();
+        updateLoopUI();
+        revealControls();
+        trimBtn.focus();
+    }
+    document.getElementById('applyTrimBtn').addEventListener('click', () => finishTrim(true));
+    document.getElementById('cancelTrimBtn').addEventListener('click', () => finishTrim(false));
+    document.getElementById('resetTrimBtn').addEventListener('click', () => {
+        draftTrimStart = 0; draftTrimEnd = video.duration;
+        seekTo(0); renderTrim();
+    });
+    document.getElementById('trimSetStart').addEventListener('click', () => setTrimPoint('start', video.currentTime));
+    document.getElementById('trimSetEnd').addEventListener('click', () => setTrimPoint('end', video.currentTime));
+    trimStartRange.addEventListener('input', () => setTrimPoint('start', Number(trimStartRange.value)));
+    trimEndRange.addEventListener('input', () => setTrimPoint('end', Number(trimEndRange.value)));
+    trimStartInput.addEventListener('change', () => setTrimPoint('start', trimStartInput.valueAsNumber));
+    trimEndInput.addEventListener('change', () => setTrimPoint('end', trimEndInput.valueAsNumber));
+
+    function enforcePlaybackRange() {
+        if (video.paused || editingTrim || editingCrop || scrubbing || !Number.isFinite(video.duration)) return;
+        const range = playbackRange();
+        if (validLoop() && video.currentTime >= loopB) {
+            video.currentTime = loopA;
+        } else if (video.currentTime >= range.end) {
+            if (document.getElementById('autoReplay').checked) video.currentTime = range.start;
+            else { video.pause(); video.currentTime = range.end; }
+        } else if (video.currentTime < range.start) {
+            video.currentTime = range.start;
+        }
+    }
+    // timeupdate alone can be a quarter second apart; watch the trim endpoint each frame.
+    let playbackFrame = null;
+    function watchPlayback() {
+        playbackFrame = null;
+        enforcePlaybackRange();
+        if (!video.paused && !video.ended) playbackFrame = requestAnimationFrame(watchPlayback);
+    }
+    video.addEventListener('play', () => {
+        if (playbackFrame === null) playbackFrame = requestAnimationFrame(watchPlayback);
+    });
+    video.addEventListener('pause', () => { cancelAnimationFrame(playbackFrame); playbackFrame = null; });
+
 </script>
 
 </body>
